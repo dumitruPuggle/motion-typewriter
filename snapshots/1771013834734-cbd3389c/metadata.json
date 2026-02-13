@@ -1,0 +1,43 @@
+{
+  "projectName": "motion-typewriter",
+  "prompt": "Generate the text \"Hello world\" with world in yellow highlighting. Black text, white background. That words should be shown next to each other in the center of the screen.\n\nAnimation: Let the words fade in from left to right and then highlight \"world\" yellow. Mimic a typewriter effect for the text appearance with a blinking cursor at the end of the text.",
+  "summary": "Generated your animation, any follow up edits?",
+  "timestamp": 1771013834734,
+  "skills": [
+    "typography",
+    "sequencing",
+    "layered-choreography",
+    "micro-interactions",
+    "example-typewriter-highlight"
+  ],
+  "conversationMessages": [
+    {
+      "id": "user-1771013812013",
+      "role": "user",
+      "content": "Generate the text \"Hello world\" with world in yellow highlighting. Black text, white background. That words should be shown next to each other in the center of the screen.\n\nAnimation: Let the words fade in from left to right and then highlight \"world\" yellow. Mimic a typewriter effect for the text appearance with a blinking cursor at the end of the text.",
+      "timestamp": 1771013812013
+    },
+    {
+      "id": "assistant-1771013834734",
+      "role": "assistant",
+      "content": "Generated your animation, any follow up edits?",
+      "timestamp": 1771013834734,
+      "codeSnapshot": "import React from \"react\";\nimport {\n  useCurrentFrame,\n  useVideoConfig,\n  AbsoluteFill,\n  interpolate,\n  spring,\n  Sequence,\n} from \"remotion\";\n\nexport const MyAnimation = () => {\n  /*\n   * A centered \"Hello world\" types in from left to right with a smoothly blinking caret that follows the text.\n   * After the full phrase is revealed, the word \"world\" transitions into a final state with a yellow highlight behind it.\n   * The background stays white and the text remains black for maximum contrast and readability.\n   */\n  const frame = useCurrentFrame();\n  const { fps, width } = useVideoConfig();\n\n  const COLOR_BG = \"#FFFFFF\";\n  const COLOR_TEXT = \"#111111\";\n  const COLOR_HIGHLIGHT = \"#FFE44D\";\n\n  const FULL_TEXT = \"Hello world\";\n  const HIGHLIGHT_WORD = \"world\";\n  const CARET_SYMBOL = \"▌\";\n\n  const PADDING = Math.max(40, Math.round(width * 0.06));\n\n  const FONT_SIZE = Math.max(64, Math.round(width * 0.08));\n  const FONT_WEIGHT = 800;\n  const LINE_HEIGHT = 1.05;\n  const LETTER_SPACING = -0.8;\n\n  const CHAR_FRAMES = 3;\n  const CURSOR_BLINK_FRAMES = 16;\n\n  const CONTAINER_IN_DURATION = 18;\n\n  const HIGHLIGHT_DELAY = 10;\n  const HIGHLIGHT_SPRING_DURATION = 22;\n\n  const CROSSFADE_DURATION = 10;\n\n  const containerIn = spring({\n    fps,\n    frame,\n    config: { damping: 18, stiffness: 160, mass: 0.9 },\n    durationInFrames: CONTAINER_IN_DURATION,\n  });\n\n  const containerOpacity = interpolate(containerIn, [0, 1], [0, 1], {\n    extrapolateLeft: \"clamp\",\n    extrapolateRight: \"clamp\",\n  });\n\n  const containerTranslateX = interpolate(containerIn, [0, 1], [20, 0], {\n    extrapolateLeft: \"clamp\",\n    extrapolateRight: \"clamp\",\n  });\n\n  const typedChars = Math.min(FULL_TEXT.length, Math.floor(frame / CHAR_FRAMES));\n  const typedText = FULL_TEXT.slice(0, typedChars);\n  const typingDone = typedChars >= FULL_TEXT.length;\n\n  const caretOpacity = interpolate(\n    frame % CURSOR_BLINK_FRAMES,\n    [0, CURSOR_BLINK_FRAMES / 2, CURSOR_BLINK_FRAMES],\n    [1, 0, 1],\n    { extrapolateLeft: \"clamp\", extrapolateRight: \"clamp\" },\n  );\n\n  const typeEndFrame = FULL_TEXT.length * CHAR_FRAMES;\n  const highlightStart = typeEndFrame + HIGHLIGHT_DELAY;\n\n  const typedLayerOpacity = interpolate(\n    frame,\n    [highlightStart - CROSSFADE_DURATION, highlightStart],\n    [1, 0],\n    { extrapolateLeft: \"clamp\", extrapolateRight: \"clamp\" },\n  );\n\n  const finalLayerOpacity = interpolate(\n    frame,\n    [highlightStart, highlightStart + CROSSFADE_DURATION],\n    [0, 1],\n    { extrapolateLeft: \"clamp\",\n      extrapolateRight: \"clamp\",\n    },\n  );\n\n  const highlightWordIndex = FULL_TEXT.indexOf(HIGHLIGHT_WORD);\n  const hasHighlight = highlightWordIndex >= 0;\n\n  const preText = hasHighlight ? FULL_TEXT.slice(0, highlightWordIndex) : \"\";\n  const postText = hasHighlight\n    ? FULL_TEXT.slice(highlightWordIndex + HIGHLIGHT_WORD.length)\n    : \"\";\n\n  const highlightIn = spring({\n    fps,\n    frame: frame - highlightStart,\n    config: { damping: 20, stiffness: 220, mass: 0.8 },\n    durationInFrames: HIGHLIGHT_SPRING_DURATION,\n  });\n\n  const highlightScaleX = interpolate(highlightIn, [0, 1], [0, 1], {\n    extrapolateLeft: \"clamp\",\n    extrapolateRight: \"clamp\",\n  });\n\n  const highlightOpacity = interpolate(highlightIn, [0, 1], [0, 1], {\n    extrapolateLeft: \"clamp\",\n    extrapolateRight: \"clamp\",\n  });\n\n  const caretTranslateX = interpolate(\n    spring({\n      fps,\n      frame: frame - typeEndFrame + 6,\n      config: { damping: 14, stiffness: 180, mass: 0.9 },\n      durationInFrames: 14,\n    }),\n    [0, 1],\n    [0, 0],\n    { extrapolateLeft: \"clamp\", extrapolateRight: \"clamp\" },\n  );\n\n  return (\n    <AbsoluteFill\n      style={{\n        backgroundColor: COLOR_BG,\n        fontFamily: \"Inter, sans-serif\",\n        padding: PADDING,\n        display: \"flex\",\n        alignItems: \"center\",\n        justifyContent: \"center\",\n      }}\n    >\n      <div\n        style={{\n          position: \"relative\",\n          opacity: containerOpacity,\n          transform: `translateX(${containerTranslateX}px)`,\n        }}\n      >\n        {/* Typewriter layer */}\n        <div\n          style={{\n            color: COLOR_TEXT,\n            fontSize: FONT_SIZE,\n            fontWeight: FONT_WEIGHT,\n            lineHeight: LINE_HEIGHT,\n            letterSpacing: LETTER_SPACING,\n            whiteSpace: \"pre\",\n            opacity: typedLayerOpacity,\n          }}\n        >\n          <span>{typedText}</span>\n          {!typingDone ? (\n            <span style={{ opacity: caretOpacity }}>{CARET_SYMBOL}</span>\n          ) : (\n            <span\n              style={{\n                opacity: caretOpacity,\n                display: \"inline-block\",\n                transform: `translateX(${caretTranslateX}px)`,\n              }}\n            >\n              {CARET_SYMBOL}\n            </span>\n          )}\n        </div>\n\n        {/* Final highlighted layer */}\n        <div\n          style={{\n            position: \"absolute\",\n            inset: 0,\n            color: COLOR_TEXT,\n            fontSize: FONT_SIZE,\n            fontWeight: FONT_WEIGHT,\n            lineHeight: LINE_HEIGHT,\n            letterSpacing: LETTER_SPACING,\n            whiteSpace: \"pre\",\n            opacity: finalLayerOpacity,\n          }}\n        >\n          {hasHighlight ? (\n            <>\n              <span>{preText}</span>\n              <span style={{ position: \"relative\", display: \"inline-block\" }}>\n                <span\n                  style={{\n                    position: \"absolute\",\n                    left: \"-0.12em\",\n                    right: \"-0.12em\",\n                    top: \"50%\",\n                    height: \"1.05em\",\n                    transform: `translateY(-50%) scaleX(${highlightScaleX})`,\n                    transformOrigin: \"left center\",\n                    backgroundColor: COLOR_HIGHLIGHT,\n                    borderRadius: \"0.22em\",\n                    opacity: highlightOpacity,\n                    zIndex: 0,\n                  }}\n                />\n                <span style={{ position: \"relative\", zIndex: 1 }}>\n                  {HIGHLIGHT_WORD}\n                </span>\n              </span>\n              <span>{postText}</span>\n              <span style={{ opacity: caretOpacity }}>{CARET_SYMBOL}</span>\n            </>\n          ) : (\n            <>\n              <span>{FULL_TEXT}</span>\n              <span style={{ opacity: caretOpacity }}>{CARET_SYMBOL}</span>\n            </>\n          )}\n        </div>\n      </div>\n    </AbsoluteFill>\n  );\n};",
+      "metadata": {
+        "projectName": "motion-typewriter",
+        "projectRepositoryId": "https://github.com/dumitruPuggle/motion-typewriter.git",
+        "skills": [
+          "typography",
+          "sequencing",
+          "layered-choreography",
+          "micro-interactions",
+          "example-typewriter-highlight"
+        ]
+      }
+    }
+  ],
+  "snapshotId": "1771013834734-cbd3389c",
+  "commitName": "generation: Generated your animation, any follow up edits?",
+  "assetPaths": [],
+  "savedAtIso": "2026-02-13T20:17:18.345Z"
+}
